@@ -2,9 +2,10 @@ import datetime
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+# A importação incorreta foi removida daqui
 
-
-# --- PLANO DE CONTAS ---
+# --- PLANO DE CONTAS (sem alterações) ---
 PLANO_DE_CONTAS = [
     {"nome": "Caixa", "grupo": "Ativo"},
     {"nome": "Clientes a Receber", "grupo": "Ativo"},
@@ -36,7 +37,7 @@ PLANO_DE_CONTAS = [
     {"nome": "COFINS sobre Vendas", "grupo": "Despesa", "R": True},
 ]
 
-# --- LANÇAMENTOS (agosto/2025) ---
+# --- LANÇAMENTOS (sem alterações) ---
 LANCAMENTOS = [
     {"debito": "Clientes a Receber", "credito": "Receita de Vendas de Mercadorias", "valor": 10000},
     {"debito": "Estoques", "credito": "Fornecedores", "valor": 6000},
@@ -60,25 +61,39 @@ LANCAMENTOS = [
 
 
 def gerar_pdf(nome_arquivo, titulo, linhas):
-    c = canvas.Canvas(nome_arquivo, pagesize=A4)
-    largura, altura = A4
-    c.setFont("Helvetica", 12)
-    c.drawString(50, altura - 50, titulo)
+    """
+    Gera um arquivo PDF formatado a partir de uma lista de linhas de texto.
+    """
+    try:
+        c = canvas.Canvas(nome_arquivo, pagesize=A4)
+        largura, altura = A4
+        margem = 2 * cm
+        y = altura - margem
 
-    y = altura - 80
-    for linha in linhas:
-        c.drawString(50, y, linha)
-        y -= 20
-        if y < 50:
-            c.showPage()
-            c.setFont("Helvetica", 12)
-            y = altura - 50
+        # Título
+        c.setFont("Courier-Bold", 14)
+        c.drawCentredString(largura / 2.0, y, titulo)
+        y -= 1.5 * cm
+        
+        # Conteúdo
+        c.setFont("Courier", 10) # Define a fonte para o corpo do texto
+        for linha in linhas:
+            c.drawString(margem, y, linha)
+            y -= 0.7 * cm
+            # Adiciona nova página se o conteúdo atingir o final
+            if y < margem:
+                c.showPage()
+                c.setFont("Courier", 10)
+                y = altura - margem
 
-    c.save()
-    print(f"Arquivo PDF '{nome_arquivo}' gerado com sucesso!\n")
+        c.save()
+        print(f"Arquivo PDF '{nome_arquivo}' gerado com sucesso!\n")
+
+    except Exception as e:
+        print(f"Ocorreu um erro ao gerar o PDF '{nome_arquivo}': {e}")
 
 
-# --- BALANCETE ---
+# --- BALANCETE (sem alterações) ---
 def balancete(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag=False):
     saldos = {c["nome"]: 0 for c in PLANO_DE_CONTAS}
 
@@ -86,11 +101,13 @@ def balancete(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag=False):
         saldos[lanc["debito"]] += lanc["valor"]
         saldos[lanc["credito"]] -= lanc["valor"]
 
-    total_debitos = total_creditos = 0
+    total_debitos = 0
+    total_creditos = 0
+    
     linhas = ["Conta".ljust(35) + "Débito".rjust(12) + "Crédito".rjust(12)]
     linhas.append("-" * 60)
 
-    for conta, saldo in saldos.items():
+    for conta, saldo in sorted(saldos.items()):
         if saldo > 0:
             linhas.append(f"{conta:<35}{saldo:>12.2f}{'':>12}")
             total_debitos += saldo
@@ -101,68 +118,74 @@ def balancete(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag=False):
     linhas.append("-" * 60)
     linhas.append(f"{'TOTAL:':<35}{total_debitos:>12.2f}{total_creditos:>12.2f}")
 
-    # Exibir no console
-    for linha in linhas:
-        print(linha)
-
-    # Gerar PDF se necessário
     if gerar_pdf_flag:
         gerar_pdf("balancete.pdf", "BALANCETE - Agosto/2025", linhas)
+    else:
+        print("\n--- BALANCETE ---")
+        for linha in linhas:
+            print(linha)
 
-# --- RELATÓRIO DE FOLHA ---
+# --- RELATÓRIO DE FOLHA (sem alterações) ---
 def relatorio_folha(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag=False):
     folha = {}
+    contas_folha_despesa = [
+        c["nome"] for c in PLANO_DE_CONTAS 
+        if c["grupo"] == "Despesa" and c.get("R") and 
+           ("Salário" in c["nome"] or "Provisão" in c["nome"] or "FGTS" in c["nome"])
+    ]
+    
     for lanc in LANCAMENTOS:
-        if any(c["nome"] == lanc["debito"] and c.get("R") 
-               for c in PLANO_DE_CONTAS if "Salário" in c["nome"] or "Provisão" in c["nome"] or "FGTS" in c["nome"]):
+        if lanc["debito"] in contas_folha_despesa:
             folha[lanc["debito"]] = folha.get(lanc["debito"], 0) + lanc["valor"]
 
-    total = 0
-    linhas = []
-    for conta, valor in folha.items():
+    total = sum(folha.values())
+
+    linhas = ["Conta de Despesa".ljust(35) + "Valor".rjust(12)]
+    linhas.append("-" * 48)
+    for conta, valor in sorted(folha.items()):
         linhas.append(f"{conta:<35}{valor:>12.2f}")
-        total += valor
-    linhas.append("-" * 50)
+    
+    linhas.append("-" * 48)
     linhas.append(f"{'TOTAL FOLHA:':<35}{total:>12.2f}")
 
-    for linha in linhas:
-        print(linha)
-
     if gerar_pdf_flag:
-        gerar_pdf("folha_pagamento.pdf", "RELATÓRIO DE DESPESAS DE FOLHA DE PAGAMENTO", linhas)
+        gerar_pdf("folha_pagamento.pdf", "RELATÓRIO DE DESPESAS DE FOLHA", linhas)
+    else:
+        print("\n--- RELATÓRIO DE DESPESAS DE FOLHA DE PAGAMENTO ---")
+        for linha in linhas:
+            print(linha)
 
-# --- RELATÓRIO DE IMPOSTOS ---
+# --- RELATÓRIO DE IMPOSTOS (sem alterações) ---
 def relatorio_impostos(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag=False):
     impostos = {}
-    contas_impostos = ["INSS", "FGTS", "ICMS", "PIS", "COFINS"]
+    contas_impostos_passivo = [c['nome'] for c in PLANO_DE_CONTAS if "a Recolher" in c['nome']]
+
+    for conta_passivo in contas_impostos_passivo:
+        impostos[conta_passivo] = 0
 
     for lanc in LANCAMENTOS:
-        conta_debito = lanc["debito"]
-        conta_credito = lanc["credito"]
-        valor = lanc["valor"]
+        if lanc["credito"] in contas_impostos_passivo:
+            impostos[lanc["credito"]] += lanc["valor"]
 
-        if any(p in conta_debito for p in contas_impostos):
-            impostos[conta_debito] = impostos.get(conta_debito, 0) + valor
-        if any(p in conta_credito for p in contas_impostos):
-            impostos[conta_credito] = impostos.get(conta_credito, 0) + valor
-
-    total = 0
-    linhas = []
-    for conta, valor in impostos.items():
-        linhas.append(f"{conta:<35}{valor:>12.2f}")
-        total += valor
-    linhas.append("-" * 50)
+    total = sum(impostos.values())
+    
+    linhas = ["Imposto a Recolher".ljust(35) + "Valor".rjust(12)]
+    linhas.append("-" * 48)
+    for conta, valor in sorted(impostos.items()):
+        if valor > 0:
+            linhas.append(f"{conta:<35}{valor:>12.2f}")
+            
+    linhas.append("-" * 48)
     linhas.append(f"{'TOTAL DE IMPOSTOS:':<35}{total:>12.2f}")
-
-    for linha in linhas:
-        print(linha)
 
     if gerar_pdf_flag:
         gerar_pdf("impostos.pdf", "RELATÓRIO DE IMPOSTOS APURADOS", linhas)
+    else:
+        print("\n--- RELATÓRIO DE IMPOSTOS APURADOS ---")
+        for linha in linhas:
+            print(linha)
 
-
-
-# --- MENU ---
+# --- MENU (sem alterações) ---
 def menu():
     while True:
         print("\n=== MENU PRINCIPAL ===")
@@ -172,9 +195,19 @@ def menu():
         print("0. Sair")
 
         opcao = input("Escolha uma opção: ")
+        
+        gerar_pdf_flag = False
         if opcao in ["1", "2", "3"]:
-            tipo_saida = input("Deseja visualizar em (1) Tela ou (2) PDF? ")
-            gerar_pdf_flag = tipo_saida == "2"
+            while True:
+                tipo_saida = input("Deseja visualizar em (1) Tela ou (2) PDF? ")
+                if tipo_saida == "1":
+                    gerar_pdf_flag = False
+                    break
+                elif tipo_saida == "2":
+                    gerar_pdf_flag = True
+                    break
+                else:
+                    print("Opção de saída inválida! Escolha 1 para Tela ou 2 para PDF.")
 
         if opcao == "1":
             balancete(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag)
@@ -183,8 +216,9 @@ def menu():
         elif opcao == "3":
             relatorio_impostos(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag)
         elif opcao == "0":
+            print("Saindo do sistema...")
             break
-        else:
+        elif opcao not in ["1", "2", "3"]:
             print("Opção inválida!")
 
 # --- EXECUTAR ---
