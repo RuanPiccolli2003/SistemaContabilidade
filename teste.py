@@ -1,5 +1,9 @@
 import datetime
 
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+
+
 # --- PLANO DE CONTAS ---
 PLANO_DE_CONTAS = [
     {"nome": "Caixa", "grupo": "Ativo"},
@@ -54,9 +58,28 @@ LANCAMENTOS = [
     {"debito": "COFINS sobre Vendas", "credito": "COFINS a Recolher", "valor": 600},
 ]
 
+
+def gerar_pdf(nome_arquivo, titulo, linhas):
+    c = canvas.Canvas(nome_arquivo, pagesize=A4)
+    largura, altura = A4
+    c.setFont("Helvetica", 12)
+    c.drawString(50, altura - 50, titulo)
+
+    y = altura - 80
+    for linha in linhas:
+        c.drawString(50, y, linha)
+        y -= 20
+        if y < 50:
+            c.showPage()
+            c.setFont("Helvetica", 12)
+            y = altura - 50
+
+    c.save()
+    print(f"Arquivo PDF '{nome_arquivo}' gerado com sucesso!\n")
+
+
 # --- BALANCETE ---
-def balancete(PLANO_DE_CONTAS, LANCAMENTOS):
-    print("\n📑 BALANCETE - Agosto/2025\n")
+def balancete(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag=False):
     saldos = {c["nome"]: 0 for c in PLANO_DE_CONTAS}
 
     for lanc in LANCAMENTOS:
@@ -64,41 +87,53 @@ def balancete(PLANO_DE_CONTAS, LANCAMENTOS):
         saldos[lanc["credito"]] -= lanc["valor"]
 
     total_debitos = total_creditos = 0
-    print(f"{'Conta':<35}{'Débito':>12}{'Crédito':>12}")
-    print("-" * 60)
+    linhas = ["Conta".ljust(35) + "Débito".rjust(12) + "Crédito".rjust(12)]
+    linhas.append("-" * 60)
 
     for conta, saldo in saldos.items():
         if saldo > 0:
-            print(f"{conta:<35}{saldo:>12.2f}{'':>12}")
+            linhas.append(f"{conta:<35}{saldo:>12.2f}{'':>12}")
             total_debitos += saldo
         elif saldo < 0:
-            print(f"{conta:<35}{'':>12}{-saldo:>12.2f}")
+            linhas.append(f"{conta:<35}{'':>12}{-saldo:>12.2f}")
             total_creditos += -saldo
 
-    print("-" * 60)
-    print(f"{'TOTAL:':<35}{total_debitos:>12.2f}{total_creditos:>12.2f}\n")
+    linhas.append("-" * 60)
+    linhas.append(f"{'TOTAL:':<35}{total_debitos:>12.2f}{total_creditos:>12.2f}")
+
+    # Exibir no console
+    for linha in linhas:
+        print(linha)
+
+    # Gerar PDF se necessário
+    if gerar_pdf_flag:
+        gerar_pdf("balancete.pdf", "BALANCETE - Agosto/2025", linhas)
 
 # --- RELATÓRIO DE FOLHA ---
-def relatorio_folha(PLANO_DE_CONTAS, LANCAMENTOS):
-    print("\n📊 RELATÓRIO DE DESPESAS DE FOLHA DE PAGAMENTO\n")
+def relatorio_folha(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag=False):
     folha = {}
     for lanc in LANCAMENTOS:
-        if any(c["nome"] == lanc["debito"] and c.get("R") for c in PLANO_DE_CONTAS if "Salário" in c["nome"] or "Provisão" in c["nome"] or "FGTS" in c["nome"]):
+        if any(c["nome"] == lanc["debito"] and c.get("R") 
+               for c in PLANO_DE_CONTAS if "Salário" in c["nome"] or "Provisão" in c["nome"] or "FGTS" in c["nome"]):
             folha[lanc["debito"]] = folha.get(lanc["debito"], 0) + lanc["valor"]
 
     total = 0
+    linhas = []
     for conta, valor in folha.items():
-        print(f"{conta:<35}{valor:>12.2f}")
+        linhas.append(f"{conta:<35}{valor:>12.2f}")
         total += valor
-    print("-" * 50)
-    print(f"{'TOTAL FOLHA:':<35}{total:>12.2f}\n")
+    linhas.append("-" * 50)
+    linhas.append(f"{'TOTAL FOLHA:':<35}{total:>12.2f}")
+
+    for linha in linhas:
+        print(linha)
+
+    if gerar_pdf_flag:
+        gerar_pdf("folha_pagamento.pdf", "RELATÓRIO DE DESPESAS DE FOLHA DE PAGAMENTO", linhas)
 
 # --- RELATÓRIO DE IMPOSTOS ---
-def relatorio_impostos(PLANO_DE_CONTAS, LANCAMENTOS):
-    print("\n📊 RELATÓRIO DE IMPOSTOS APURADOS\n")
+def relatorio_impostos(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag=False):
     impostos = {}
-
-    # Apenas impostos/encargos
     contas_impostos = ["INSS", "FGTS", "ICMS", "PIS", "COFINS"]
 
     for lanc in LANCAMENTOS:
@@ -106,20 +141,26 @@ def relatorio_impostos(PLANO_DE_CONTAS, LANCAMENTOS):
         conta_credito = lanc["credito"]
         valor = lanc["valor"]
 
-        # 1) Despesas relacionadas a impostos/encargos
         if any(p in conta_debito for p in contas_impostos):
             impostos[conta_debito] = impostos.get(conta_debito, 0) + valor
-
-        # 2) Passivo correspondente (a Recolher)
         if any(p in conta_credito for p in contas_impostos):
             impostos[conta_credito] = impostos.get(conta_credito, 0) + valor
 
     total = 0
+    linhas = []
     for conta, valor in impostos.items():
-        print(f"{conta:<35}{valor:>12.2f}")
+        linhas.append(f"{conta:<35}{valor:>12.2f}")
         total += valor
-    print("-" * 50)
-    print(f"{'TOTAL DE IMPOSTOS:':<35}{total:>12.2f}\n")
+    linhas.append("-" * 50)
+    linhas.append(f"{'TOTAL DE IMPOSTOS:':<35}{total:>12.2f}")
+
+    for linha in linhas:
+        print(linha)
+
+    if gerar_pdf_flag:
+        gerar_pdf("impostos.pdf", "RELATÓRIO DE IMPOSTOS APURADOS", linhas)
+
+
 
 # --- MENU ---
 def menu():
@@ -131,13 +172,16 @@ def menu():
         print("0. Sair")
 
         opcao = input("Escolha uma opção: ")
+        if opcao in ["1", "2", "3"]:
+            tipo_saida = input("Deseja visualizar em (1) Tela ou (2) PDF? ")
+            gerar_pdf_flag = tipo_saida == "2"
 
         if opcao == "1":
-            balancete(PLANO_DE_CONTAS, LANCAMENTOS)
+            balancete(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag)
         elif opcao == "2":
-            relatorio_folha(PLANO_DE_CONTAS, LANCAMENTOS)
+            relatorio_folha(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag)
         elif opcao == "3":
-            relatorio_impostos(PLANO_DE_CONTAS, LANCAMENTOS)
+            relatorio_impostos(PLANO_DE_CONTAS, LANCAMENTOS, gerar_pdf_flag)
         elif opcao == "0":
             break
         else:
