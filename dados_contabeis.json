@@ -1,0 +1,98 @@
+[
+    {
+        "data": "03/08/2025",
+        "debito": "Clientes a Receber",
+        "credito": "Receita de Vendas de Mercadorias",
+        "valor": 10000.0
+    },
+    {
+        "data": "05/08/2025",
+        "debito": "Estoques",
+        "credito": "Fornecedores",
+        "valor": 6000.0
+    },
+    {
+        "data": "07/08/2025",
+        "debito": "Despesa de Energia",
+        "credito": "Caixa",
+        "valor": 800.0
+    },
+    {
+        "data": "10/08/2025",
+        "debito": "Despesa de Honorários",
+        "credito": "Caixa",
+        "valor": 1200.0
+    },
+    {
+        "data": "12/08/2025",
+        "debito": "Despesa Bancária",
+        "credito": "Caixa",
+        "valor": 150.0
+    },
+    {
+        "data": "14/08/2025",
+        "debito": "Despesa de Sistemas",
+        "credito": "Caixa",
+        "valor": 500.0
+    },
+    {
+        "data": "15/08/2025",
+        "debito": "Despesa de Combustível",
+        "credito": "Caixa",
+        "valor": 600.0
+    },
+    {
+        "data": "20/08/2025",
+        "debito": "Despesa de Depreciação",
+        "credito": "Depreciação Acumulada",
+        "valor": 1000.0
+    },
+    {
+        "data": "25/08/2025",
+        "debito": "Despesa de Salário",
+        "credito": "Salários a Pagar",
+        "valor": 4500.0
+    },
+    {
+        "data": "25/08/2025",
+        "debito": "Despesa de Salário",
+        "credito": "Salários a Pagar",
+        "valor": 3600.0
+    },
+    {
+        "data": "28/08/2025",
+        "debito": "Despesa Provisão 13º",
+        "credito": "Provisão 13º Salário",
+        "valor": 1500.0
+    },
+    {
+        "data": "28/08/2025",
+        "debito": "Despesa Provisão Férias",
+        "credito": "Provisão Férias",
+        "valor": 1200.0
+    },
+    {
+        "data": "28/08/2025",
+        "debito": "Despesa FGTS",
+        "credito": "FGTS a Recolher",
+        "valor": 880.0
+    },
+    {
+        "data": "30/08/2025",
+        "debito": "ICMS sobre Vendas",
+        "credito": "ICMS a Recolher",
+        "valor": 1200.0
+    },
+    {
+        "data": "30/08/2025",
+        "debito": "PIS sobre Vendas",
+        "credito": "PIS a Recolher",
+        "valor": 200.0
+    },
+    {
+        "data": "30/08/2025",
+        "debito": "COFINS sobre Vendas",
+        "credito": "COFINS a Recolher",
+        "valor": 600.0
+    }
+]
